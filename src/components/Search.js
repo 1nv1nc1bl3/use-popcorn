@@ -1,12 +1,9 @@
-import { useState } from 'react';
-
-export default function Search() {
-    const [query, setQuery] = useState('');
+export default function Search({ query, setQuery }) {
     return (
         <input
             className='search'
             type='text'
-            placeholder='Search movies...'
+            placeholder='Start typing to search for movies...'
             value={query}
             onChange={(e) => setQuery(e.target.value)}
         />

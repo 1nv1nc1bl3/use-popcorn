@@ -8,72 +8,54 @@ import NumResults from './components/NumResults';
 import WatchedMoviesList from './components/WatchedMoviesList';
 import WatchedSummary from './components/WatchedSummary';
 
-const tempMovieData = [
-    {
-        imdbID: 'tt1375666',
-        Title: 'Inception',
-        Year: '2010',
-        Poster: 'https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_SX300.jpg',
-    },
-    {
-        imdbID: 'tt0133093',
-        Title: 'The Matrix',
-        Year: '1999',
-        Poster: 'https://m.media-amazon.com/images/M/MV5BNzQzOTk3OTAtNDQ0Zi00ZTVkLWI0MTEtMDllZjNkYzNjNTc4L2ltYWdlXkEyXkFqcGdeQXVyNjU0OTQ0OTY@._V1_SX300.jpg',
-    },
-    {
-        imdbID: 'tt6751668',
-        Title: 'Parasite',
-        Year: '2019',
-        Poster: 'https://m.media-amazon.com/images/M/MV5BYWZjMjk3ZTItODQ2ZC00NTY5LWE0ZDYtZTI3MjcwN2Q5NTVkXkEyXkFqcGdeQXVyODk4OTc3MTY@._V1_SX300.jpg',
-    },
-];
-
-const tempWatchedData = [
-    {
-        imdbID: 'tt1375666',
-        Title: 'Inception',
-        Year: '2010',
-        Poster: 'https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_SX300.jpg',
-        runtime: 148,
-        imdbRating: 8.8,
-        userRating: 10,
-    },
-    {
-        imdbID: 'tt0088763',
-        Title: 'Back to the Future',
-        Year: '1985',
-        Poster: 'https://m.media-amazon.com/images/M/MV5BZmU0M2Y1OGUtZjIxNi00ZjBkLTg1MjgtOWIyNThiZWIwYjRiXkEyXkFqcGdeQXVyMTQxNzMzNDI@._V1_SX300.jpg',
-        runtime: 116,
-        imdbRating: 8.5,
-        userRating: 9,
-    },
-];
-
+// const tempQuery = 'interstellar';
 const KEY = 'cb1f27af';
-const query = 'interstellar';
-const api = `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`;
 
 export default function App() {
     const [movies, setMovies] = useState([]);
     const [watched, setWatched] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [query, setQuery] = useState('');
 
     useEffect(() => {
+        const controller = new AbortController();
         const fetchedMovies = async () => {
             try {
-                const res = await fetch(api);
+                setLoading(true);
+                setError('');
+                const res = await fetch(
+                    `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`,
+                    { signal: controller.signal }
+                );
+                // console.log(res);
+                if (!res.ok)
+                    throw new Error(
+                        'Something went wrong with fetching movies.'
+                    );
                 const data = await res.json();
+                if (data.Response === 'False')
+                    throw new Error('Movie not found');
                 setMovies(data.Search);
                 // console.log(data.Search);
-            } catch (error) {
-                console.log('Error fetching movies', error);
+            } catch (err) {
+                setError(err.message);
+                // console.log('Error fetching movies', err);
             } finally {
                 setLoading(false);
             }
         };
-        fetchedMovies();
-    }, []);
+        if (query.length < 3) {
+            setMovies([]);
+            setError('');
+            return;
+        }
+        const timer = setTimeout(fetchedMovies, 500);
+        return () => {
+            clearTimeout(timer);
+            controller.abort();
+        };
+    }, [query]);
 
     // fetch(`http://www.omdbapi.com/?apikey=${KEY}&s=interstellar`)
     //     .then((res) => res.json())
@@ -81,18 +63,25 @@ export default function App() {
     return (
         <>
             <Navbar>
-                <Search />
+                <Search query={query} setQuery={setQuery} />
                 <NumResults movies={movies} />
             </Navbar>
 
             <Main>
                 <Box>
-                    <MovieList movies={movies} loading={loading} />
+                    <MovieList
+                        movies={movies}
+                        loading={loading}
+                        error={error}
+                    />
                 </Box>
 
                 <Box>
-                    <WatchedSummary watched={watched} />
-                    <WatchedMoviesList watched={watched} />
+                    <WatchedSummary watched={watched} setWatched={setWatched} />
+                    <WatchedMoviesList
+                        watched={watched}
+                        setWatched={setWatched}
+                    />
                 </Box>
             </Main>
         </>

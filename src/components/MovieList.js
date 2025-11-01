@@ -1,17 +1,20 @@
-import { ClipLoader } from 'react-spinners';
+import Spinner from './Spinner';
 import Movie from './Movie';
 
-export default function MovieList({ movies, loading }) {
+export default function MovieList({ movies, loading, error }) {
+    const ErrorMessage = ({ message }) => {
+        return <p className='error'>{message}</p>;
+    };
+
     return (
         <ul className='list'>
-            {loading ? (
-                // <h2 style={{ color: '#fff' }}>Loading...</h2>
-                <ClipLoader />
-            ) : (
+            {loading && <Spinner />}
+            {!loading &&
+                !error &&
                 movies?.map((movie) => (
                     <Movie movie={movie} key={movie.imdbID} />
-                ))
-            )}
+                ))}
+            {error && <ErrorMessage message={error} />}
         </ul>
     );
 }
