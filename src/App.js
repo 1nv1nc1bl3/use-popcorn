@@ -7,6 +7,7 @@ import Box from './components/Box';
 import NumResults from './components/NumResults';
 import WatchedMoviesList from './components/WatchedMoviesList';
 import WatchedSummary from './components/WatchedSummary';
+import MovieDetails from './components/MovieDetails';
 
 // const tempQuery = 'interstellar';
 const KEY = 'cb1f27af';
@@ -17,6 +18,15 @@ export default function App() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [query, setQuery] = useState('');
+    const [selectedId, setSelectedId] = useState(null);
+
+    function handleSelectMovie(id) {
+        setSelectedId((selectedId) => (id === selectedId ? null : id));
+    }
+
+    function handleCloseMovie() {
+        setSelectedId(null);
+    }
 
     useEffect(() => {
         const controller = new AbortController();
@@ -73,15 +83,28 @@ export default function App() {
                         movies={movies}
                         loading={loading}
                         error={error}
+                        onSelectMovie={handleSelectMovie}
                     />
                 </Box>
 
                 <Box>
-                    <WatchedSummary watched={watched} setWatched={setWatched} />
-                    <WatchedMoviesList
-                        watched={watched}
-                        setWatched={setWatched}
-                    />
+                    {selectedId ? (
+                        <MovieDetails
+                            onCloseMovie={handleCloseMovie}
+                            selectedId={selectedId}
+                        />
+                    ) : (
+                        <>
+                            <WatchedSummary
+                                watched={watched}
+                                setWatched={setWatched}
+                            />
+                            <WatchedMoviesList
+                                watched={watched}
+                                setWatched={setWatched}
+                            />
+                        </>
+                    )}
                 </Box>
             </Main>
         </>
