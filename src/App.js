@@ -8,6 +8,7 @@ import NumResults from './components/NumResults';
 import WatchedMoviesList from './components/WatchedMoviesList';
 import WatchedSummary from './components/WatchedSummary';
 import MovieDetails from './components/MovieDetails';
+// import { tempWatchedData } from './data';
 
 const KEY = 'cb1f27af';
 
@@ -19,6 +20,7 @@ export default function App() {
     const [query, setQuery] = useState('');
     const [selectedId, setSelectedId] = useState(null);
 
+    // Functions
     function handleSelectMovie(id) {
         setSelectedId((selectedId) => (id === selectedId ? null : id));
     }
@@ -27,9 +29,18 @@ export default function App() {
         setSelectedId(null);
     }
 
+    function handleAddWatched(movie) {
+        setWatched((watched) => [...watched, movie]);
+    }
+
+    function handleDeleteWatched(id) {
+        setWatched((watched) => watched.filter((movie) => movie.imdbID !== id));
+    }
+
+    // Data Fetching
     useEffect(() => {
         const controller = new AbortController();
-        const fetchedMovies = async () => {
+        const fetchMovies = async () => {
             try {
                 setLoading(true);
                 setError('');
@@ -59,7 +70,7 @@ export default function App() {
             setError('');
             return;
         }
-        const timer = setTimeout(fetchedMovies, 500);
+        const timer = setTimeout(fetchMovies, 500);
         return () => {
             clearTimeout(timer);
             controller.abort();
@@ -91,6 +102,8 @@ export default function App() {
                         <MovieDetails
                             onCloseMovie={handleCloseMovie}
                             selectedId={selectedId}
+                            onAddWatched={handleAddWatched}
+                            watched={watched}
                         />
                     ) : (
                         <>
@@ -99,6 +112,7 @@ export default function App() {
                                 setWatched={setWatched}
                             />
                             <WatchedMoviesList
+                                onDelete={handleDeleteWatched}
                                 watched={watched}
                                 setWatched={setWatched}
                             />

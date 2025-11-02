@@ -3,10 +3,16 @@ import StarRating from './StarRating';
 import Spinner from '../components/Spinner';
 
 const KEY = 'cb1f27af';
-const MovieDetails = ({ selectedId, onCloseMovie }) => {
+export default function MovieDetails({
+    selectedId,
+    onCloseMovie,
+    onAddWatched,
+    onSetRating,
+    watched,
+}) {
     const [movie, setMovie] = useState({});
     const [loading, setLoading] = useState(false);
-    const [movieRating, setMovieRating] = useState(0);
+    const [userRating, setUserRating] = useState(0);
 
     const {
         Title: title,
@@ -20,6 +26,25 @@ const MovieDetails = ({ selectedId, onCloseMovie }) => {
         Director: director,
         Genre: genre,
     } = movie;
+
+    const isWatched = watched.map((movie) => movie.imdbID).includes(selectedId);
+
+    const watchedUserRating = watched.find(
+        (movie) => movie.imdbID === selectedId
+    )?.userRating;
+
+    function handleAdd() {
+        const newWatchedMovie = {
+            imdbID: selectedId,
+            title,
+            poster,
+            imdbRating: Number(imdbRating),
+            runtime: Number(runtime.split(' ').at(0)),
+            userRating,
+        };
+        onAddWatched(newWatchedMovie);
+        onCloseMovie();
+    }
 
     useEffect(() => {
         const getMovieDetails = async () => {
@@ -38,6 +63,14 @@ const MovieDetails = ({ selectedId, onCloseMovie }) => {
         };
         getMovieDetails();
     }, [selectedId]);
+
+    useEffect(() => {
+        if (!title) return;
+        document.title = `${title} | usePopcorn App`;
+        return function () {
+            document.title = 'usePopcorn';
+        };
+    }, [title]);
 
     return (
         <div className='details'>
@@ -59,18 +92,37 @@ const MovieDetails = ({ selectedId, onCloseMovie }) => {
                             </p>
                         </div>
                         <button className='btn-back' onClick={onCloseMovie}>
-                            &larr;
+                            &#10554;
+                            {/* &larr; */}
                         </button>
                     </header>
                     <section>
                         <div className='rating'>
-                            <StarRating
-                                onSetRating={setMovieRating}
-                                maxRating={10}
-                                size={24}
-                                movieRating={movieRating}
-                                setMovieRating={setMovieRating}
-                            />
+                            {!isWatched ? (
+                                <>
+                                    <StarRating
+                                        onSetRating={setUserRating}
+                                        maxRating={10}
+                                        size={24}
+                                    />
+
+                                    {userRating > 0 && (
+                                        <button
+                                            className='btn-add'
+                                            onClick={handleAdd}
+                                        >
+                                            + Add to list
+                                        </button>
+                                    )}
+                                </>
+                            ) : (
+                                <p>
+                                    You have already rated{' '}
+                                    <strong>{title}</strong> with{' '}
+                                    {watchedUserRating}
+                                    <span>⭐</span>
+                                </p>
+                            )}
                         </div>
                         <p>
                             <em>{plot}</em>
@@ -86,6 +138,4 @@ const MovieDetails = ({ selectedId, onCloseMovie }) => {
             )}
         </div>
     );
-};
-
-export default MovieDetails;
+}
